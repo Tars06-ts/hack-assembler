@@ -1,42 +1,62 @@
-type jinst = JGT
-           | JEQ
-           | JGE
-           | JLT
-           | JNE
-           | JLE
-           | JMP
-           
+module Reg = struct
+    type r = A | M | D
+    type r2 = A | M
+end
 
-type computation = const | unary | binary
+module  Instr = struct
+    type jinst = JGT
+               | JEQ
+               | JGE
+               | JLT
+               | JNE
+               | JLE
+               | JMP
+               
+    type const = Zero 
+               | One 
+               | MinusOne
 
-type dest = M
-	      | D
-	      | MD
-	      | A
- 	      | AM
-	      | AD      
-          | AMD
+    type unary = Bneg 
+               | UMinus
+               | Succ
+               | Pred 
+               | ID
 
+    type binary = Add 
+                | Sub 
+                | SubFrom 
+                | BAnd 
+                | BOr
 
-type const = Zero | One    | MinusOne
-type unary = Bneg | UMinus | Succ    | Pred | ID
-type binary = Add | Sub    | SubFrom | BAnd | BOr
+    type out = Const of const
+             | Unary of Reg.r*unary
+             | Binary of Reg.r2*binary
 
-type out = Const of const
-         | Unary of unary
-         | Binary of binary
+    type dest = M
+    	      | D
+	          | MD
+	          | A
+     	      | AM
+    	      | AD      
+              | AMD
+              
 
-type cinst = { destination = dest option;
-               output      = computation option;
-               jump        = jinst option
-             }
+    type cinst = { destination : dest option;
+                   output      : out;
+                   jump        : jinst option
+                 }
 
-type 'v inst = A of 'v
-             | C of cinst
+    type 'v inst = A of 'v
+                 | C of cinst
+    
+    let map f = function
+              | A x -> A (f x)
+              | C i -> C i
 
-let map f = function
-          | A x -> A (f x)
-          | C i -> C i
+end
 
+module Program= struct
+    type 'v prog = 'v Inst.t list
 
+end
      
