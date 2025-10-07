@@ -3,7 +3,7 @@ module Reg = struct
     type r2 = A | M
 end
 
-module  Instr = struct
+module Instr = struct
     type jinst = JGT
                | JEQ
                | JGE
@@ -46,17 +46,22 @@ module  Instr = struct
                    jump        : jinst option
                  }
 
-    type 'v inst = A of 'v
-                 | C of cinst
+    type 'v t = A of 'v
+              | C of cinst
     
     let map f = function
               | A x -> A (f x)
               | C i -> C i
 
+    let resolve f = function
+                  | C i -> Ok (C i)
+                  | A x -> match f x with
+                        | Some y -> Ok (A y)
+                        | None -> Error x
 end
 
 module Program= struct
-    type 'v prog = 'v Inst.t list
-
+    type 'v prog = 'v Instr.t list
+    let map f ls = List.map (Instr.map f) ls 
 end
      
