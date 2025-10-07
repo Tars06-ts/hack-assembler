@@ -1,6 +1,3 @@
-type 'v inst = A of 'v
-             | C of cinst
-
 type jinst = JGT
            | JEQ
            | JGE
@@ -9,11 +6,6 @@ type jinst = JGT
            | JLE
            | JMP
            
-
-let map f = function
-          | A x -> A (f x)
-          | C i -> C i
-
 
 type computation = const | unary | binary
 
@@ -25,17 +17,26 @@ type dest = M
 	      | AD      
           | AMD
 
-type cinst = { destination = dest option;
-               output      = computation option;
-               jump        = jinst option
-             }
-
 
 type const = Zero | One    | MinusOne
 type unary = Bneg | UMinus | Succ    | Pred | ID
 type binary = Add | Sub    | SubFrom | BAnd | BOr
 
+type out = Const of const
+         | Unary of unary
+         | Binary of binary
 
+type cinst = { destination = dest option;
+               output      = computation option;
+               jump        = jinst option
+             }
+
+type 'v inst = A of 'v
+             | C of cinst
+
+let map f = function
+          | A x -> A (f x)
+          | C i -> C i
 
 
      
