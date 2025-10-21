@@ -1,2 +1,3 @@
 (library
- (name assembler))
+ (name assembler)
+ (public_name assembler))
