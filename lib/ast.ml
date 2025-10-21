@@ -16,7 +16,7 @@ module Instr = struct
                | One 
                | MinusOne
 
-    type unary = Bneg 
+    type unary = BNeg 
                | UMinus
                | Succ
                | Pred 

@@ -11,6 +11,12 @@ module Jmp = struct
                 | JNE -> [ 1; 0; 1]
                 | JLE -> [ 1; 1; 0]
                 | JMP -> [ 1; 1; 1]
+
+    let encode (js: Ast.Instr.jinst option) : int list 
+         match js with
+                | None -> [0; 0; 0]
+                | Some js -> jmp ds
+
 end
 
 (*Destination module*)
@@ -20,25 +26,57 @@ module Dest = struct
                 | M -> [0; 0; 1]
                 | D -> [0; 1; 0]
                 | A -> [1; 0; 0]
+                | MD -> [0; 1; 1]
+                | AM -> [1; 0; 1]
+                | AD -> [1; 1; 0]
+                | AMD -> [1; 1; 1]
+
+     let encode (ds: Ast.Reg.r option) : int list =
+         match ds with
+                  | None -> [0; 0; 0]
+                  | Some ds -> dest ds
 end
 
-(*Constant module*)
-module Const = struct
+module Computation = struct
+    
+    (*Constant def*)
     let const (c: Ast.Instr.const) : int list = 
-        match c with
-                | Zero     -> [0;1;0;1;0;1;0]
-                | One      -> [0;1;1;1;1;1;1]
-                | MinusOne -> [0;1;1;1;0;1;0] 
-end
+            match c with
+                    | Zero     -> [0;1;0;1;0;1;0]
+                    | One      -> [0;1;1;1;1;1;1]
+                    | MinusOne -> [0;1;1;1;0;1;0] 
+
+    (*Unary module*)
+    module Unary = struct
+        let encodeR (r: Ast.Reg.r) : int list = 
+            match r with 
+                    | D-> [0;0;0;1;1]
+                    | A-> [0;1;1;0;0]
+                    | M-> [1;1;1;0;0]
                              
+        let uEncode (u:Ast.Instr.unary) : int list = 
+            match u with
+                | ID     -> [0;0]
+                | BNeg   -> [0;1]
+                | UMinus -> [1;1]
+                | Pred   -> [1;0]
+                | Succ   -> [1;1]
+
+        let succ (r: Ast.Reg.r) : int list =
+              match r with 
+                | D => [0;0;1;1;1;1;1]
+                | A => [0;1;1;0;1;1;1]
+                | M => [1;1;1;0;1;1;1]
+
+        let encode (o:Ast.Instr.unary)*(r: Ast.Reg.r) : int list =
+            match o with 
+                | Succ -> succ r
+                |  _   -> uEncode o @ encodeR r
+
+    end
+    (*Binary Module*)
+    module Binary = struct 
+        let encodeB (o : Ast.Instr.binary)*(r : )
 
 
-let jmp = function
-        | JGT -> 0b100
-        | JEQ -> 0b010
-        | JGE -> 0b110
-        | JLT -> 0b001
-        | JNE -> 0b101
-        | JLE -> 0b011
-        | JMP -> 0b111 
-
+                
