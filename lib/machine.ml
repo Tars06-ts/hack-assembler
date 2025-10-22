@@ -76,7 +76,27 @@ module Computation = struct
     end
     (*Binary Module*)
     module Binary = struct 
-        let encodeB (o : Ast.Instr.binary)*(r : )
+        let encodeB (o : Ast.Instr.binary)*(r :Ast.Reg.r2 ): int list =
+            let ambit = match r with 
+                | A -> 0
+                | _ -> 1
+            in
+            let opbits = match o with
+                | Add      -> [0;0;0;0;1;0]
+                | Sub      -> [0;1;0;0;1;1]
+                | SubFrom  -> [0;0;0;1;1;1]
+                | BAnd     -> [0;0;0;0;0;0]
+                | BOr      -> [0;1;0;1;0;1]
+            in
+            (ambits @ opbits)
+    end
+    let encode (out: Ast.Instr.out): int list =
+        match out with 
+            | Const c  -> const c
+            | Unary o r -> Unary.encode o r
+            | Binary o r -> Binary.encodeB o r
+end         
+   
 
 
-                
+
