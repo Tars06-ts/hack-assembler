@@ -97,6 +97,9 @@ module Computation = struct
             | Binary o r -> Binary.encodeB o r
 end         
    
-
+module Cinst = struct 
+        let encode (c:Inst.cinst) : int list = 
+                match c with {dest; out; jump} ->
+                        [1;1;1] @ (Computation.encode out) @ (Dest.encode dest) @ (Jmp.encode jump)
 
 

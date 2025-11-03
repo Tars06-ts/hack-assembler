@@ -61,7 +61,27 @@ module Instr = struct
 end
 
 module Program= struct
-    type 'v prog = 'v Instr.t list
-    let map f ls = List.map (Instr.map f) ls 
+    type 'v stmt = Label of string
+                     | Instruction of 'v Inst.t
+
+    type 'v t = 'v stmt list
+
+    let map f prog = 
+            let map_line = function
+                         | Label l -> Label l
+                         | Instruction i -> Inst.map f i
+            in List.map map_line prog
+
+let address {prog: 'v t} : (string * int) list 
+    let rec address_line lines add ls = 
+            match lines with 
+                    | (Label s):: tail -> address_line tail add (s, add) :: ls
+                    | (Instruction i)::tail -> address_line tail (add+1) ls
+                    | [] -> List.rev ls
+            in address_line prog 0 []
+
+                    
+                    
 end
-     
+
+
