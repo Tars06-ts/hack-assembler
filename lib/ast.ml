@@ -29,8 +29,8 @@ module Instr = struct
                 | BOr
 
     type out = Const of const
-             | Unary of Reg.r*unary
-             | Binary of Reg.r2*binary
+             | Unary of unary*Reg.r
+             | Binary of binary*Reg.r2
 
     type dest = M
     	      | D
@@ -41,8 +41,8 @@ module Instr = struct
               | AMD
               
 
-    type cinst = { destination : dest option;
-                   output      : out;
+    type cinst = { dest : dest option;
+                   out  : out;
                    jump        : jinst option
                  }
 
@@ -62,21 +62,21 @@ end
 
 module Program= struct
     type 'v stmt = Label of string
-                     | Instruction of 'v Inst.t
+                     | Instruction of 'v Instr.t
 
     type 'v t = 'v stmt list
 
     let map f prog = 
             let map_line = function
                          | Label l -> Label l
-                         | Instruction i -> Inst.map f i
+                         | Instruction i -> Instruction (Instr.map f i)
             in List.map map_line prog
 
-let address {prog: 'v t} : (string * int) list 
+let address (prog: 'v t) : (string * int) list =  
     let rec address_line lines add ls = 
             match lines with 
-                    | (Label s):: tail -> address_line tail add (s, add) :: ls
-                    | (Instruction i)::tail -> address_line tail (add+1) ls
+                    | (Label s):: tail -> address_line tail add ((s, add) :: ls)
+                    | (Instruction _)::tail -> address_line tail (add+1) ls
                     | [] -> List.rev ls
             in address_line prog 0 []
 

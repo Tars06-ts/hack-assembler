@@ -12,16 +12,16 @@ module Jmp = struct
                 | JLE -> [ 1; 1; 0]
                 | JMP -> [ 1; 1; 1]
 
-    let encode (js: Ast.Instr.jinst option) : int list 
+    let encode (js: Ast.Instr.jinst option) : int list =  
          match js with
                 | None -> [0; 0; 0]
-                | Some js -> jmp ds
+                | Some js -> jmp js
 
 end
 
 (*Destination module*)
 module Dest = struct
-    let dest (d: Ast.Reg.r) : int list =
+    let dest (d: Ast.Instr.dest) : int list =
         match d with 
                 | M -> [0; 0; 1]
                 | D -> [0; 1; 0]
@@ -31,7 +31,7 @@ module Dest = struct
                 | AD -> [1; 1; 0]
                 | AMD -> [1; 1; 1]
 
-     let encode (ds: Ast.Reg.r option) : int list =
+     let encode (ds: Ast.Instr.dest option) : int list =
          match ds with
                   | None -> [0; 0; 0]
                   | Some ds -> dest ds
@@ -64,11 +64,11 @@ module Computation = struct
 
         let succ (r: Ast.Reg.r) : int list =
               match r with 
-                | D => [0;0;1;1;1;1;1]
-                | A => [0;1;1;0;1;1;1]
-                | M => [1;1;1;0;1;1;1]
+                | D -> [0;0;1;1;1;1;1]
+                | A -> [0;1;1;0;1;1;1]
+                | M -> [1;1;1;0;1;1;1]
 
-        let encode (o:Ast.Instr.unary)*(r: Ast.Reg.r) : int list =
+        let encode ((o,r) : Ast.Instr.unary * Ast.Reg.r) : int list =
             match o with 
                 | Succ -> succ r
                 |  _   -> uEncode o @ encodeR r
@@ -76,7 +76,7 @@ module Computation = struct
     end
     (*Binary Module*)
     module Binary = struct 
-        let encodeB (o : Ast.Instr.binary)*(r :Ast.Reg.r2 ): int list =
+        let encodeB ((o,r) : Ast.Instr.binary * Ast.Reg.r2) : int list =
             let ambit = match r with 
                 | A -> 0
                 | _ -> 1
@@ -88,18 +88,18 @@ module Computation = struct
                 | BAnd     -> [0;0;0;0;0;0]
                 | BOr      -> [0;1;0;1;0;1]
             in
-            (ambits @ opbits)
+            ([ambit] @ opbits)
     end
     let encode (out: Ast.Instr.out): int list =
         match out with 
             | Const c  -> const c
-            | Unary o r -> Unary.encode o r
-            | Binary o r -> Binary.encodeB o r
+            | Unary (o,r) -> Unary.encode (o,r)
+            | Binary (o, r) -> Binary.encodeB (o, r)
 end         
    
 module Cinst = struct 
-        let encode (c:Inst.cinst) : int list = 
+        let encode (c:Ast.Instr.cinst) : int list = 
                 match c with {dest; out; jump} ->
                         [1;1;1] @ (Computation.encode out) @ (Dest.encode dest) @ (Jmp.encode jump)
-
+end
 
