@@ -96,10 +96,25 @@ module Computation = struct
             | Unary (o,r) -> Unary.encode (o,r)
             | Binary (o, r) -> Binary.encodeB (o, r)
 end         
+
+let bin_convert num = 
+    let rec func num bits count = 
+        if count = 15 then bits
+        else 
+            let bit = n land in 
+            func (num lsr 1)(bit::bits) (count+1)
+    in 
+    func num [] 0
    
-module Cinst = struct 
-        let encode (c:Ast.Instr.cinst) : int list = 
-                match c with {dest; out; jump} ->
-                        [1;1;1] @ (Computation.encode out) @ (Dest.encode dest) @ (Jmp.encode jump)
+module Inst = struct
+    let to_string (ls : int list) : string = 
+        String.concat "" (List.map string_of_int ls)
+
+        let encode (i:Ast.Instr.t) : int list = 
+                match i with  ->
+                    | Ast.Instr.A val -> to_string (0::bin_convert val)
+                    | Ast.Instr.C {dest: dest; out:out; jump: jinst} -> to_string( [1;1;1] @ (Computation.encode out) @ (Dest.encode dest) @ (Jmp.encode jinst))
+
 end
+
 

@@ -114,19 +114,42 @@ let parse_out (out_str : string) : Instr.out =
 
 let parse_a_instr (a_instr : string) : string Instr.t= 
     A String.sub a_instr 1 (String.length a_instr -1)
-
 let parse_label (label_line : string) : string = 
     String.sub label_line 1 (String.length label_line -2)
 
 let parse_line (line : string) : string Program.stmt
    let cleaned_line =  clean_line line in 
     match cleaned_line.[0] with 
-    | '@' -> Instruction parse_a_instr cleaned_line
+    | '@' -> Instruction parse_a_instr cleaned_line 
     | '('  -> Label parse_label cleaned_line
     | _   -> Instruction parse_out cleaned_line         
+
+
 
 let read_file path = Sys.read_arg path |> String.split_on_char '\n'                        
 let parse_lines (lines: string list) : string Program.t = 
     List.map parse_line lines
 
+(*SYMBOL TABLE*)
+type symbol_table = (string, int) Hashtbl.t
+
+let initial_size = 32
+
+let create_symbol_table () : symbol_table =
+  let table = Hashtbl.create initial_size in
+
+  for i = 0 to 15 do
+    let symbol = "R" ^ (string_of_int i) in
+    Hashtbl.add table symbol i
+  done;
+
+  Hashtbl.add table "SP"      0;
+  Hashtbl.add table "LCL"     1;
+  Hashtbl.add table "ARG"     2;
+  Hashtbl.add table "THIS"    3;
+  Hashtbl.add table "THAT"    4;
+  Hashtbl.add table "SCREEN"  16384; (* 0x4000 *)
+  Hashtbl.add table "KBD"     24576; (* 0x6000 *)
+
+  table;
 
