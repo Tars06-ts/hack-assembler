@@ -97,23 +97,31 @@ module Computation = struct
             | Binary (o, r) -> Binary.encodeB (o, r)
 end         
 
-let bin_convert num = 
-    let rec func num bits count = 
-        if count = 15 then bits
-        else 
-            let bit = n land in 
-            func (num lsr 1)(bit::bits) (count+1)
-    in 
-    func num [] 0
+let bin_convert (n : int) : string =
+  let rec to_binary_string acc i =
+    if i < 0 then acc (* Stop condition when we've processed all 15 bits (i=-1) *)
+    else
+      (* Create a mask with a single bit set at position i *)
+      let mask = 1 lsl i in
+      
+      (* Check if the i-th bit is set in the number n *)
+      let bit_val = if (n land mask) <> 0 then '1' else '0' in
+      
+      (* Recursively call, prepending the new bit character to the accumulator string *)
+      to_binary_string (acc ^ (String.make 1 bit_val)) (i - 1)
+  in
+  
+  (* Start the iteration from the 14th bit (the 15th bit position, counting from 0) *)
+  to_binary_string "" 14
    
 module Inst = struct
     let to_string (ls : int list) : string = 
         String.concat "" (List.map string_of_int ls)
 
-        let encode (i:Ast.Instr.t) : int list = 
-                match i with  ->
-                    | Ast.Instr.A val -> to_string (0::bin_convert val)
-                    | Ast.Instr.C {dest: dest; out:out; jump: jinst} -> to_string( [1;1;1] @ (Computation.encode out) @ (Dest.encode dest) @ (Jmp.encode jinst))
+        let encode (i : int Ast.Instr.t) : string = 
+                match i with
+                    | Ast.Instr.A v -> "0" ^ (bin_convert v)
+                    | Ast.Instr.C {dest; out; jump} -> to_string( [1;1;1] @ (Computation.encode out) @ (Dest.encode dest) @ (Jmp.encode jump))
 
 end
 

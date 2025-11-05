@@ -50,7 +50,6 @@ let parse_const (const_str : string) : Instr.const option=
         | _   -> failwith ("Invalid register " ^ s)*)
 
 let parse_unary (unary_str : string) : Instr.out option =
-    let len = String.length unary_str in 
     match unary_str with 
            (* | _ when len >=2 && String.sub unary_str (len-2) 2 = "+1" ->
                     let r_str = String.sub unary_str 0 (len-2) in 
@@ -101,7 +100,7 @@ let parse_binary (binary_str : string) : Instr.out =
             | _              -> failwith("Invalid binary instruction: " ^ binary_str)
 
 let parse_out (out_str : string) : Instr.out =
-    match out_str 
+    match out_str with 
     | _ -> 
             match parse_const out_str with
             | Some c -> Instr.Const c
@@ -110,46 +109,96 @@ let parse_out (out_str : string) : Instr.out =
                        | Some d -> d
                        | None   -> parse_binary out_str
 
+let parse_c_instr (line : string) : Instr.cinst = 
+    let jump_str, rest = 
+        match String.split_on_char ';' line with
+        | [rest] -> ("", rest)
+        | [rest; jump_str] -> (jump_str, rest)
+        | _ -> ("", "")
+    in 
+    let dest_str, out_str = 
+        match String.split_on_char '=' rest with 
+        | [out_str] -> ("", out_str)
+        | [dest_str; out_str] -> (dest_str, out_str)
+        | _ -> ("", "")
+    in
+    let dest = parse_dest dest_str in
+    let out = parse_out out_str in
+    let jump = parse_jump jump_str 
+    in { dest ; out ; jump} 
+
+
 (*---MANHANDLING THE A INSTRUCTIONS---*)
 
 let parse_a_instr (a_instr : string) : string Instr.t= 
-    A String.sub a_instr 1 (String.length a_instr -1)
+    A (String.sub a_instr 1 (String.length a_instr -1))
+    
 let parse_label (label_line : string) : string = 
     String.sub label_line 1 (String.length label_line -2)
 
-let parse_line (line : string) : string Program.stmt
+let parse_line (line : string) : string Program.stmt = 
    let cleaned_line =  clean_line line in 
     match cleaned_line.[0] with 
-    | '@' -> Instruction parse_a_instr cleaned_line 
-    | '('  -> Label parse_label cleaned_line
-    | _   -> Instruction parse_out cleaned_line         
+    | '@' -> Instruction (parse_a_instr cleaned_line) 
+    | '('  -> Label (parse_label cleaned_line)
+    | _   -> Instruction (Instr.C (parse_c_instr cleaned_line))         
 
 
 
-let read_file path = Sys.read_arg path |> String.split_on_char '\n'                        
 let parse_lines (lines: string list) : string Program.t = 
     List.map parse_line lines
 
 (*SYMBOL TABLE*)
-type symbol_table = (string, int) Hashtbl.t
+module Symbol_table = Map.Make(String)
+    let init_sym_tab () : (int Symbol_table.t)=
+        let pre_def_sym = 
+            [("R0", 0); ("R1", 1);("R2", 2);("R3", 3);("R4", 4);("R5", 5);
+            ("R6", 6);("R7", 7);("R8", 8);("R9", 9);("R10", 10);("R11", 11);
+            ("R12", 12);("R13", 13);("R14", 14);("R15", 15);("SP", 0); ("LCL", 1);
+            ("ARG", 2); ("THIS", 3); ("THAT", 4); ("SCREEN", 16384); ("KBD", 24576)
+            ]
+        in 
+        List.fold_left (fun acc (key, value) -> Symbol_table.add key value acc) Symbol_table.empty pre_def_sym
 
-let initial_size = 32
+(*-----PASS-1-----*)
 
-let create_symbol_table () : symbol_table =
-  let table = Hashtbl.create initial_size in
+let label_add (prog : string Program.t) (table : int Symbol_table.t) : int Symbol_table.t = 
+    let labels = Program.address prog in
+        List.fold_left (fun acc (key, value) -> Symbol_table.add key value acc) table labels
+        
+(*-----PASS-2-----*)
 
-  for i = 0 to 15 do
-    let symbol = "R" ^ (string_of_int i) in
-    Hashtbl.add table symbol i
-  done;
+let instr_add (table : int Symbol_table.t) =
+    let table_ptr = ref table in
+    let next_add = ref 16 in 
+    
+    let resolve_sym str= 
+        try 
+        (int_of_string str)
+        with Failure _ -> 
+            match Symbol_table.find_opt str !table_ptr with
+                | Some add -> add
+                | None -> 
+                        let new_add = !next_add in
+                        table_ptr := Symbol_table.add str new_add !table_ptr;
+                        next_add := !next_add + 1;
+                        new_add
+    in resolve_sym 
 
-  Hashtbl.add table "SP"      0;
-  Hashtbl.add table "LCL"     1;
-  Hashtbl.add table "ARG"     2;
-  Hashtbl.add table "THIS"    3;
-  Hashtbl.add table "THAT"    4;
-  Hashtbl.add table "SCREEN"  16384; (* 0x4000 *)
-  Hashtbl.add table "KBD"     24576; (* 0x6000 *)
+let gen_code (prog: int Program.t) : string list = 
+    let rec loop (lines_left : int Program.t) (ls : string list) : string list = 
+        match lines_left with 
+        | [] -> List.rev ls
+        | instr :: tail -> 
+                match instr with 
+                | Label _ -> loop tail ls
+                | Instruction i -> loop tail ((Machine.Inst.encode i) :: ls)
+    in loop prog []
 
-  table;
+let final_proj (prog : string Program.t) : string =
+    let table = init_sym_tab () in 
+    let table_with_labels= label_add prog table in
+    let table_complete = instr_add table_with_labels in
+    let resolved_program = Program.map table_complete prog 
+in String.concat "\n" (gen_code resolved_program)
 

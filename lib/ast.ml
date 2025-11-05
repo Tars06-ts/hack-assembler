@@ -71,6 +71,14 @@ module Program= struct
                          | Label l -> Label l
                          | Instruction i -> Instruction (Instr.map f i)
             in List.map map_line prog
+
+    let address (prog: 'v t) : (string * int) list =
+    let rec address_line lines add ls =
+            match lines with
+                    | (Label s):: tail -> address_line tail add ((s, add) :: ls)
+                    | (Instruction _)::tail -> address_line tail (add+1) ls
+                    | [] -> List.rev ls
+            in address_line prog 0 []
 end
 
 
