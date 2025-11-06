@@ -1,4 +1,5 @@
 open Ast
+open Machine
 
 let trim_string s = String.trim s
 
@@ -136,13 +137,22 @@ let parse_a_instr (a_instr : string) : string Instr.t=
 let parse_label (label_line : string) : string = 
     String.sub label_line 1 (String.length label_line -2)
 
-let parse_line (line : string) : string Program.stmt = 
+(*let parse_line (line : string) : string Program.stmt = 
    let cleaned_line =  clean_line line in 
     match cleaned_line.[0] with 
     | '@' -> Instruction (parse_a_instr cleaned_line) 
     | '('  -> Label (parse_label cleaned_line)
     | _   -> Instruction (Instr.C (parse_c_instr cleaned_line))         
-
+*)
+let parse_line (line : string) : string Program.stmt =
+   let cleaned_line =  clean_line line in
+   if String.length cleaned_line = 0 then
+     Instruction (Instr.C { dest = None; out = Instr.Const Instr.Zero; jump = None }) (* or handle empty lines appropriately *)
+   else
+     match cleaned_line.[0] with
+     | '@' -> Instruction (parse_a_instr cleaned_line)
+     | '('  -> Label (parse_label cleaned_line)
+     | _   -> Instruction (Instr.C (parse_c_instr cleaned_line))
 
 
 let parse_lines (lines: string list) : string Program.t = 
@@ -192,7 +202,7 @@ let gen_code (prog: int Program.t) : string list =
         | instr :: tail -> 
                 match instr with 
                 | Label _ -> loop tail ls
-                | Instruction i -> loop tail ((Machine.Inst.encode i) :: ls)
+                | Instruction i -> loop tail ((Inst.encode i) :: ls)
     in loop prog []
 
 let final_proj (prog : string Program.t) : string =
