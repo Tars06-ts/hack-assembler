@@ -71,7 +71,7 @@ module Computation = struct
         let encode ((o,r) : Ast.Instr.unary * Ast.Reg.r) : int list =
             match o with 
                 | Succ -> succ r
-                |  _   -> uEncode o @ encodeR r
+                |  _   -> encodeR r @ uEncode o
 
     end
     (*Binary Module*)

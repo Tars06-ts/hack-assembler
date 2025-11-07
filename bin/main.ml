@@ -1,3 +1,4 @@
+open Assembler
 open Parser
 
 open Stdlib
