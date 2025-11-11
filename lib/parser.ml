@@ -129,8 +129,6 @@ let parse_c_instr (line : string) : Instr.cinst =
     in { dest ; out ; jump} 
 
 
-(*---MANHANDLING THE A INSTRUCTIONS---*)
-
 let parse_a_instr (a_instr : string) : string Instr.t= 
     A (String.sub a_instr 1 (String.length a_instr -1))
     
