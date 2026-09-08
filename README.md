@@ -14,23 +14,27 @@ An assembler written in OCaml that translates Hack assembly language (`.asm`) in
 
 ```bash
 dune build
-./assembler.exe path/to/Program.asm
+dune exec bin/main.exe -- path/to/Program.asm
 ```
 
 This produces `Program.hack` in the same directory, containing the binary machine code.
+
+*(Update the exact executable name/path above to match your `bin/` entry point.)*
 
 ## Project Structure
 
 ```
 .
-├── lexer.ml       # Tokenizes raw assembly lines
-├── parser.ml      # Parses A- and C-instructions
-├── symbol_table.ml # Manages predefined + user-defined symbols
-├── encoder.ml     # Translates parsed instructions to binary
-└── main.ml        # Entry point — orchestrates the two-pass assembly
+├── bin/                # Executable entry point
+├── lib/                # Core assembler logic
+│   ├── ast.ml          # AST types for parsed instructions
+│   ├── parser.ml       # Parses A- and C-instructions into the AST
+│   └── machine.ml       # Translates AST into binary machine code
+├── test/               # Test suite
+├── assembler.opam      # OPAM package definition
+├── dune-project         # Dune project configuration
+└── .gitignore
 ```
-
-*(Adjust the file list above to match your actual module names.)*
 
 ## Background
 
