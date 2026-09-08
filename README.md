@@ -44,5 +44,3 @@ This assembler is part of the Hack platform toolchain from the *Elements of Comp
 
 - OCaml (version X.X+)
 - Dune build system
-
-MIT
